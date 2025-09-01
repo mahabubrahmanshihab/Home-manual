@@ -1,0 +1,303 @@
+import { GetStaticProps } from 'next'
+import Head from 'next/head'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useState } from 'react'
+import { MagnifyingGlassIcon, DocumentTextIcon, ShieldCheckIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
+import { supabase } from '../lib/supabase'
+import type { Brand, Product } from '../lib/supabase'
+
+interface HomePageProps {
+  featuredBrands: Brand[]
+  popularProducts: Product[]
+  categories: { name: string; slug: string; count: number }[]
+  totalManuals: number
+}
+
+export default function HomePage({ 
+  featuredBrands, 
+  popularProducts, 
+  categories, 
+  totalManuals 
+}: HomePageProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`
+    }
+  }
+
+  return (
+    <>
+      <Head>
+        <title>ApplianceManuals - Find Manuals for Any Home Appliance</title>
+        <meta name="description" content="Find and download manuals for fridges, washing machines, dryers, TVs and more. Over 1 million appliance manuals available." />
+        <meta name="keywords" content="appliance manuals, user guides, installation manuals, repair manuals, home appliances" />
+      </Head>
+
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link href="/" className="text-2xl font-bold text-primary-600">
+                ApplianceManuals
+              </Link>
+              <nav className="hidden md:flex space-x-8">
+                <Link href="/brands" className="text-gray-600 hover:text-primary-600 transition-colors">
+                  Brands
+                </Link>
+                <Link href="/categories" className="text-gray-600 hover:text-primary-600 transition-colors">
+                  Categories
+                </Link>
+                <Link href="/admin" className="text-gray-600 hover:text-primary-600 transition-colors">
+                  Admin
+                </Link>
+              </nav>
+            </div>
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div className="text-center">
+              <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                Find Any Appliance Manual
+              </h1>
+              <p className="text-xl md:text-2xl mb-8 text-primary-100 max-w-3xl mx-auto">
+                Access over {totalManuals.toLocaleString()} manuals for fridges, washing machines, dryers, TVs and more
+              </p>
+              
+              {/* Search Bar */}
+              <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+                <div className="flex">
+                  <div className="relative flex-1">
+                    <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by brand, model, or product..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 text-lg text-gray-900 placeholder-gray-500 bg-white border-0 rounded-l-xl focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-8 py-4 bg-primary-500 hover:bg-primary-400 text-white font-semibold rounded-r-xl transition-colors"
+                  >
+                    Search
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose ApplianceManuals?</h2>
+              <p className="text-xl text-gray-600">The most comprehensive collection of appliance manuals</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <DocumentTextIcon className="h-8 w-8 text-primary-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Vast Collection</h3>
+                <p className="text-gray-600">Over 1 million manuals from thousands of brands and models</p>
+              </div>
+              
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ShieldCheckIcon className="h-8 w-8 text-primary-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Verified Quality</h3>
+                <p className="text-gray-600">All manuals are verified and high-quality PDF documents</p>
+              </div>
+              
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ArrowRightIcon className="h-8 w-8 text-primary-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Instant Access</h3>
+                <p className="text-gray-600">Download immediately after purchase, no waiting</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Categories */}
+        <section className="py-16 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Browse by Category</h2>
+              <p className="text-xl text-gray-600">Find manuals for all types of home appliances</p>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {categories.map((category) => (
+                <Link
+                  key={category.slug}
+                  href={`/category/${category.slug}`}
+                  className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-200 hover:border-primary-300"
+                >
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{category.name}</h3>
+                  <p className="text-gray-600">{category.count.toLocaleString()} manuals</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Brands */}
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Popular Brands</h2>
+              <p className="text-xl text-gray-600">Manuals from trusted appliance manufacturers</p>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+              {featuredBrands.map((brand) => (
+                <Link
+                  key={brand.id}
+                  href={`/brand/${brand.slug}`}
+                  className="bg-gray-50 rounded-xl p-6 text-center hover:bg-gray-100 transition-colors border border-gray-200 hover:border-primary-300"
+                >
+                  {brand.logo_url ? (
+                    <div className="w-16 h-16 mx-auto mb-3 relative">
+                      <Image
+                        src={brand.logo_url}
+                        alt={`${brand.name} logo`}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 mx-auto mb-3 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <span className="text-primary-600 font-semibold text-lg">
+                        {brand.name.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                  <h3 className="font-semibold text-gray-900">{brand.name}</h3>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-gray-900 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="grid md:grid-cols-4 gap-8">
+              <div className="md:col-span-2">
+                <h3 className="text-2xl font-bold mb-4">ApplianceManuals</h3>
+                <p className="text-gray-300 mb-4">
+                  Your trusted source for home appliance manuals, user guides, and technical documentation.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
+                <ul className="space-y-2 text-gray-300">
+                  <li><Link href="/brands" className="hover:text-white transition-colors">All Brands</Link></li>
+                  <li><Link href="/categories" className="hover:text-white transition-colors">Categories</Link></li>
+                  <li><Link href="/search" className="hover:text-white transition-colors">Search</Link></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Support</h4>
+                <ul className="space-y-2 text-gray-300">
+                  <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
+                  <li><Link href="/help" className="hover:text-white transition-colors">Help Center</Link></li>
+                  <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-800 pt-8 mt-8 text-center text-gray-400">
+              <p>&copy; 2025 ApplianceManuals. All rights reserved.</p>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </>
+  )
+}
+
+export const getStaticProps: GetStaticProps = async () => {
+  try {
+    // Fetch featured brands
+    const { data: featuredBrands } = await supabase
+      .from('brands')
+      .select('*')
+      .limit(12)
+
+    // Fetch popular products with brand info
+    const { data: popularProducts } = await supabase
+      .from('products')
+      .select('*, brand:brands(*)')
+      .limit(8)
+
+    // Fetch categories with counts
+    const { data: categoryData } = await supabase
+      .from('products')
+      .select('category')
+
+    const categoryMap: Record<string, number> = {}
+    categoryData?.forEach(item => {
+      categoryMap[item.category] = (categoryMap[item.category] || 0) + 1
+    })
+
+    const categoryNames: Record<string, string> = {
+      'fridge': 'Refrigerators',
+      'washing-machine': 'Washing Machines',
+      'dryer': 'Dryers',
+      'tv': 'TVs & Electronics',
+      'dishwasher': 'Dishwashers',
+      'oven': 'Ovens & Ranges',
+      'microwave': 'Microwaves',
+      'air-conditioner': 'Air Conditioners'
+    }
+
+    const categories = Object.entries(categoryMap).map(([slug, count]) => ({
+      name: categoryNames[slug] || slug,
+      slug,
+      count
+    }))
+
+    // Get total manual count
+    const { count: totalManuals } = await supabase
+      .from('manuals')
+      .select('*', { count: 'exact', head: true })
+
+    return {
+      props: {
+        featuredBrands: featuredBrands || [],
+        popularProducts: popularProducts || [],
+        categories: categories.slice(0, 8),
+        totalManuals: totalManuals || 0
+      },
+      revalidate: 3600 // Revalidate every hour
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    return {
+      props: {
+        featuredBrands: [],
+        popularProducts: [],
+        categories: [],
+        totalManuals: 0
+      },
+      revalidate: 60
+    }
+  }
+}
