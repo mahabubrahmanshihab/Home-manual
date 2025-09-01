@@ -1,0 +1,134 @@
+import { GetStaticPaths, GetStaticProps } from 'next'
+import Head from 'next/head'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useState } from 'react'
+import { ChevronRightIcon, DocumentTextIcon, DownloadIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
+import { supabase } from '../../lib/supabase'
+import type { Model, Product, Brand, Manual } from '../../lib/supabase'
+
+interface ModelPageProps {
+  model: Model & { 
+    product: Product & { 
+      brand: Brand 
+    } 
+  }
+  manuals: Manual[]
+}
+
+export default function ModelPage({ model, manuals }: ModelPageProps) {
+  const [selectedType, setSelectedType] = useState<string>('')
+
+  const manualTypes: Record<string, string> = {
+    'user-manual': 'User Manual',
+    'installation': 'Installation Guide',
+    'service': 'Service Manual',
+    'parts': 'Parts Diagram',
+    'quick-start': 'Quick Start Guide',
+    'warranty': 'Warranty Information'
+  }
+
+  const filteredManuals = selectedType 
+    ? manuals.filter(manual => manual.type === selectedType)
+    : manuals
+
+  const uniqueTypes = [...new Set(manuals.map(m => m.type))]
+
+  const categoryNames: Record<string, string> = {
+    'fridge': 'Refrigerators',
+    'washing-machine': 'Washing Machines',
+    'dryer': 'Dryers',
+    'tv': 'TVs & Electronics',
+    'dishwasher': 'Dishwashers',
+    'oven': 'Ovens & Ranges',
+    'microwave': 'Microwaves',
+    'air-conditioner': 'Air Conditioners'
+  }
+
+  return (
+    <>
+      <Head>
+        <title>{model.model_number} Manuals - {model.product.brand.name} - ApplianceManuals</title>
+        <meta name="description" content={`Download manuals for ${model.product.brand.name} ${model.product.name} model ${model.model_number}. User guides, installation manuals, and service documentation available.`} />
+      </Head>
+
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link href="/" className="text-2xl font-bold text-primary-600">
+                ApplianceManuals
+              </Link>
+              <nav className="hidden md:flex space-x-8">
+                <Link href="/brands" className="text-gray-600 hover:text-primary-600 transition-colors">
+                  Brands
+                </Link>
+                <Link href="/categories" className="text-gray-600 hover:text-primary-600 transition-colors">
+                  Categories
+                </Link>
+              </nav>
+            </div>
+          </div>
+        </header>
+
+        {/* Breadcrumb */}
+        <nav className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <Link href="/" className="hover:text-primary-600">Home</Link>
+              <ChevronRightIcon className="h-4 w-4" />
+              <Link href="/brands" className="hover:text-primary-600">Brands</Link>
+              <ChevronRightIcon className="h-4 w-4" />
+              <Link href={`/brand/${model.product.brand.slug}`} className="hover:text-primary-600">
+                {model.product.brand.name}
+              </Link>
+              <ChevronRightIcon className="h-4 w-4" />
+              <Link href={`/product/${model.product.slug}`} className="hover:text-primary-600">
+                {model.product.name}
+              </Link>
+              <ChevronRightIcon className="h-4 w-4" />
+              <span className="text-gray-900">{model.model_number}</span>
+            </div>
+          </div>
+        </nav>
+
+        {/* Model Header */}
+        <section className="bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="flex items-start space-x-8">
+              {model.image_url ? (
+                <div className="w-40 h-40 relative flex-shrink-0">
+                  <Image
+                    src={model.image_url}
+                    alt={model.model_number}
+                    fill
+                    className="object-cover rounded-xl"
+                  />
+                </div>
+              ) : (
+                <div className="w-40 h-40 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-gray-400 text-sm">No Image</span>
+                </div>
+              )}
+              
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-3">
+                  {model.product.brand.logo_url ? (
+                    <div className="w-8 h-8 relative">
+                      <Image
+                        src={model.product.brand.logo_url}
+                        alt={`${model.product.brand.name} logo`}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : null}
+                  <span className="text-primary-600 font-medium">
+                    {model.product.brand.name}
+                  </span>
+                </div>
+                
+                <h1 className="text-4xl font-bold text-gray-900 mb-2">{model.model_number}</h1>
+                
+                {
