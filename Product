@@ -1,0 +1,276 @@
+import { GetStaticPaths, GetStaticProps } from 'next'
+import Head from 'next/head'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useState } from 'react'
+import { ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { supabase } from '../../lib/supabase'
+import type { Product, Brand, Model } from '../../lib/supabase'
+
+interface ProductPageProps {
+  product: Product & { brand: Brand }
+  models: Model[]
+}
+
+export default function ProductPage({ product, models }: ProductPageProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredModels = models.filter(model =>
+    model.model_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (model.name && model.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
+
+  const categoryNames: Record<string, string> = {
+    'fridge': 'Refrigerators',
+    'washing-machine': 'Washing Machines',
+    'dryer': 'Dryers',
+    'tv': 'TVs & Electronics',
+    'dishwasher': 'Dishwashers',
+    'oven': 'Ovens & Ranges',
+    'microwave': 'Microwaves',
+    'air-conditioner': 'Air Conditioners'
+  }
+
+  return (
+    <>
+      <Head>
+        <title>{product.name} Models - {product.brand.name} - ApplianceManuals</title>
+        <meta name="description" content={`Find manuals for ${product.brand.name} ${product.name} models. Download user guides, installation manuals, and service documentation.`} />
+      </Head>
+
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <Link href="/" className="text-2xl font-bold text-primary-600">
+                ApplianceManuals
+              </Link>
+              <nav className="hidden md:flex space-x-8">
+                <Link href="/brands" className="text-gray-600 hover:text-primary-600 transition-colors">
+                  Brands
+                </Link>
+                <Link href="/categories" className="text-gray-600 hover:text-primary-600 transition-colors">
+                  Categories
+                </Link>
+              </nav>
+            </div>
+          </div>
+        </header>
+
+        {/* Breadcrumb */}
+        <nav className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <Link href="/" className="hover:text-primary-600">Home</Link>
+              <ChevronRightIcon className="h-4 w-4" />
+              <Link href="/brands" className="hover:text-primary-600">Brands</Link>
+              <ChevronRightIcon className="h-4 w-4" />
+              <Link href={`/brand/${product.brand.slug}`} className="hover:text-primary-600">
+                {product.brand.name}
+              </Link>
+              <ChevronRightIcon className="h-4 w-4" />
+              <span className="text-gray-900">{product.name}</span>
+            </div>
+          </div>
+        </nav>
+
+        {/* Product Header */}
+        <section className="bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="flex items-start space-x-8">
+              {product.image_url ? (
+                <div className="w-32 h-32 relative flex-shrink-0">
+                  <Image
+                    src={product.image_url}
+                    alt={product.name}
+                    fill
+                    className="object-cover rounded-xl"
+                  />
+                </div>
+              ) : (
+                <div className="w-32 h-32 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-gray-400 text-sm">No Image</span>
+                </div>
+              )}
+              
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-3">
+                  {product.brand.logo_url ? (
+                    <div className="w-8 h-8 relative">
+                      <Image
+                        src={product.brand.logo_url}
+                        alt={`${product.brand.name} logo`}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : null}
+                  <span className="text-primary-600 font-medium">
+                    {product.brand.name}
+                  </span>
+                </div>
+                
+                <h1 className="text-4xl font-bold text-gray-900 mb-2">{product.name}</h1>
+                
+                <div className="text-sm text-primary-600 font-medium mb-4 uppercase tracking-wide">
+                  {categoryNames[product.category] || product.category}
+                </div>
+                
+                {product.description && (
+                  <p className="text-lg text-gray-600 mb-6">{product.description}</p>
+                )}
+                
+                <div className="flex items-center text-sm text-gray-500">
+                  <span>{models.length} models available</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Search */}
+        <section className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="relative max-w-md">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by model number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Models Grid */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {filteredModels.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">
+                {searchQuery ? 'No models found matching your search.' : 'No models available yet.'}
+              </p>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="mt-4 text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Clear search
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {searchQuery ? `Search Results (${filteredModels.length})` : 'All Models'}
+                </h2>
+              </div>
+              
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredModels.map((model) => (
+                  <Link
+                    key={model.id}
+                    href={`/model/${model.slug}`}
+                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 overflow-hidden"
+                  >
+                    {model.image_url ? (
+                      <div className="aspect-video relative">
+                        <Image
+                          src={model.image_url}
+                          alt={model.model_number}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                        <span className="text-gray-400 text-sm">No Image</span>
+                      </div>
+                    )}
+                    
+                    <div className="p-6">
+                      <h3 className="font-bold text-gray-900 mb-1 text-lg">
+                        {model.model_number}
+                      </h3>
+                      {model.name && (
+                        <p className="text-sm text-gray-600 mb-2">{model.name}</p>
+                      )}
+                      {model.year && (
+                        <p className="text-xs text-gray-500">Year: {model.year}</p>
+                      )}
+                      
+                      <div className="mt-4 flex items-center justify-between">
+                        <span className="text-sm text-primary-600 font-medium">
+                          View Manuals
+                        </span>
+                        <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
+        </main>
+      </div>
+    </>
+  )
+}
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const { data: products } = await supabase
+    .from('products')
+    .select('slug')
+
+  const paths = products?.map(product => ({
+    params: { slug: product.slug }
+  })) || []
+
+  return {
+    paths: paths.slice(0, 100), // Limit for build performance
+    fallback: 'blocking'
+  }
+}
+
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  if (!params?.slug) {
+    return { notFound: true }
+  }
+
+  try {
+    // Fetch product with brand info
+    const { data: product } = await supabase
+      .from('products')
+      .select(`
+        *,
+        brand:brands(*)
+      `)
+      .eq('slug', params.slug)
+      .single()
+
+    if (!product) {
+      return { notFound: true }
+    }
+
+    // Fetch models for this product
+    const { data: models } = await supabase
+      .from('models')
+      .select('*')
+      .eq('product_id', product.id)
+      .order('model_number')
+
+    return {
+      props: {
+        product,
+        models: models || []
+      },
+      revalidate: 3600
+    }
+  } catch (error) {
+    console.error('Error fetching product:', error)
+    return { notFound: true }
+  }
+}
